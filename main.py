@@ -61,8 +61,8 @@ def after_login_choices() -> str:
 def before_login_choices() -> str:
     while True:
         print()
-        response = input("What would you like to do?:\nAdd A User: [A]\nDelete A User: [D]\
-        \nLogin As A User: [L]\nSELECT: ").lower()
+        response = input("What would you like to do?:\nAdd A Username/Email: [A]\nDelete A Username/Email: [D]\
+        \nLogin With A Username/Email: [L]\nSELECT: ").lower()
         if response == 'a' or response == 'd' or response == 'l':
             return response
         print("\n******************************")
@@ -74,7 +74,7 @@ def main():
     if len(users) == 0:
         print("It looks like you don't have a profile set up. Let's set one up for you!")
         while True:
-            username = str(input("Please enter a username without any spaces: "))
+            username = str(input("Please enter a username/email without any spaces: "))
             if not ' ' in username:
                 break
         while True:
@@ -88,7 +88,7 @@ def main():
         add_user(username, password, users)
 
     else: # if there are already users available, show the active usernames that can be logged into
-        print("Active usernames with passwords stored: ")
+        print("Active usernames/emails with passwords stored: ")
         for user in users:
             print(user.username)
 
@@ -100,7 +100,7 @@ def main():
             password = None
             while True: # gets a new username
                 while True:
-                    username = str(input("Please enter a new username without any spaces: "))
+                    username = str(input("Please enter a new username/email without any spaces: "))
                     if not ' ' in username:
                         break
                 check_valid = True
@@ -110,7 +110,7 @@ def main():
                         break
                 if (check_valid == True):
                     break
-                print("Username is already taken.")
+                print("Username/Email is already taken.")
 
             while True: # gets a new password
                 password = str(input("Please enter a password without any spaces: "))
@@ -118,40 +118,46 @@ def main():
                     break
             add_user(username, password, users)
         elif before_login_choice == 'd':
-            while True:
-                to_delete = str(input("Which user would you like to delete?: "))
-                if(delete_user(to_delete, users) == True):
-                    print("Successfully removed the user profile.")
-                    break
-                print("Please enter a valid user to delete.")
-                print()
+            if len(users) == 0:
+                print("Must have at least one user profile to do so.")
+            else:
+                while True:
+                    to_delete = str(input("Which username/email would you like to delete?: "))
+                    if(delete_user(to_delete, users) == True):
+                        print("Successfully removed the user profile.")
+                        break
+                    print("Please enter a valid username/email to delete.")
+                    print()
         else: # else, the user wants to login and chose 'l' 
-            while True:
-                username = None
-                password = None
-                while True: # gets a username to login to
-                    username = str(input("Please enter a username to login with: "))
-                    check_valid = False
-                    for user in users:
-                        if user.username == username:
-                            check_valid = True
-                    if check_valid == True:
-                        break
-                    print("Username does not exist.")
+            if len(users) == 0:
+                print("Must have at least one user profile to do so.")
+            else:
+                while True:
+                    username = None
+                    password = None
+                    while True: # gets a username to login to
+                        username = str(input("Please enter a username/email to login with: "))
+                        check_valid = False
+                        for user in users:
+                            if user.username == username:
+                                check_valid = True
+                        if check_valid == True:
+                            break
+                        print("Username/Email does not exist.")
 
-                valid_password = False
-                password = str(input("Please enter the password to login: "))
-                for user in users:
-                    if user.username == username and user.password == password:
-                        current_user = user
-                        valid_password = True
+                    valid_password = False
+                    password = str(input("Please enter the password to login: "))
+                    for user in users:
+                        if user.username == username and user.password == password:
+                            current_user = user
+                            valid_password = True
+                            break
+                    if valid_password == True:
                         break
-                if valid_password == True:
-                    break
-                print("Incorrect password. Please try again.")
+                    print("Incorrect password. Please try again.")
     
     print()
-    print(f"Welcome {current_user.username}! Here are the sites you currently have passwords for:")
+    print(f"You are logged in as {current_user.username}! Here are the sites you currently have passwords for:")
        
 
     after_login_choice = after_login_choices() # returns either 'a' 'c' or 'r' for add password, change password, or remove password
