@@ -1,7 +1,9 @@
 import os
 
-users = []
-current_user = None
+username = None
+password = None
+
+site_passwords = {}
 
 class User:
     def __init__(self, username: str, password: str):
@@ -27,54 +29,40 @@ class User:
             return True
         return False
 
-if os.path.getsize('users.txt') != 0: # if a profile has been set up already, load in the usernames and passwords for each user
-    with open("users.txt") as f:
-            lines = f.readlines()
-            for line in lines:
-                (key, val) = line.strip('\n').split()
-                users.append(User(key, val))
+if os.path.getsize('MasterLogin.txt') != 0: # if a profile has been set up already, load in the username and password for it
+    with open("MasterLogin.txt") as f:
+        (key, val) = f.readline().strip('\n').split()
+        username = key
+        password = val
 
-def add_user(username: str, password: str, users: list) -> bool:
-    for user in users:
-        if user.username == username:
-            return False
-    users.append(User(username, password))
-
-def delete_user(username: str, users: list) -> bool:
-    for user in users:
-        if user.username == username:
-            users.remove(user)
-            return True
-    return False
+def change_master_login():
+    global username, password
+    entered_username = str(input("Please enter your current username "))
+    entered_password = str(input("Please enter your current password: "))
+    if entered_username == username and entered_password == password:
+        username = str(input("Please enter a new username to use: "))
+        password = str(input("Please enter a new password to use: "))
+        print("\nSuccessfully changed login information!")
+    else:
+        print("\nIncorrect username or password was entered. Please try again.\n")
 
 def after_login_choices() -> str:
     while True:
         print()
-        response = input("What would you like to do?:\nAdd A Password: [A]\nChange A Password: [C]\
-        \nRemove A Password: [R]\nSELECT: ").lower()
-        if response == 'a' or response == 'r' or response == 'c':
-            return response
-        print("\n******************************")
-        print("Please choose a valid choice.")
-        print("******************************")
-
-def before_login_choices() -> str:
-    while True:
-        print()
-        response = input("What would you like to do?:\nAdd A Username/Email: [A]\nDelete A Username/Email: [D]\
-        \nLogin With A Username/Email: [L]\nSELECT: ").lower()
-        if response == 'a' or response == 'd' or response == 'l':
+        response = input("What would you like to do?:\nFetch A Password: [F]\nAdd A Password: [A]\nChange A Password: [C]\
+        \nDelete A Password: [D]\nReset Login Information: [R]\nSELECT: ").lower()
+        if response == 'f' or response == 'a' or response == 'c' or response == 'd' or response == 'r':
             return response
         print("\n******************************")
         print("Please choose a valid choice.")
         print("******************************")
 
 def main():
-    current_user = None
-    if len(users) == 0:
+    global username, password
+    if username == None:
         print("It looks like you don't have a profile set up. Let's set one up for you!")
         while True:
-            username = str(input("Please enter a username/email without any spaces: "))
+            username = str(input("Please enter a username without any spaces: "))
             if not ' ' in username:
                 break
         while True:
@@ -84,89 +72,59 @@ def main():
         print("Successfully created the user profile.")
         # at this point, you have a valid username and password without spaces for the user 
 
-        # also add the username and password to the users list as a new user
-        add_user(username, password, users)
-
-    else: # if there are already users available, show the active usernames that can be logged into
-        print("Active usernames/emails with passwords stored: ")
-        for user in users:
-            print(user.username)
-
-    while current_user == None:
-        before_login_choice = before_login_choices() # returns either 'a' 'd' or 'l' for add user, delete user, or login as a user
-        print()
-        if before_login_choice == 'a':
-            username = None
-            password = None
-            while True: # gets a new username
-                while True:
-                    username = str(input("Please enter a new username/email without any spaces: "))
-                    if not ' ' in username:
-                        break
-                check_valid = True
-                for user in users:
-                    if user.username == username:
-                        check_valid = False
-                        break
-                if (check_valid == True):
-                    break
-                print("Username/Email is already taken.")
-
-            while True: # gets a new password
-                password = str(input("Please enter a password without any spaces: "))
-                if not ' ' in password:
-                    break
-            add_user(username, password, users)
-        elif before_login_choice == 'd':
-            if len(users) == 0:
-                print("Must have at least one user profile to do so.")
-            else:
-                while True:
-                    to_delete = str(input("Which username/email would you like to delete?: "))
-                    if(delete_user(to_delete, users) == True):
-                        print("Successfully removed the user profile.")
-                        break
-                    print("Please enter a valid username/email to delete.")
-                    print()
-        else: # else, the user wants to login and chose 'l' 
-            if len(users) == 0:
-                print("Must have at least one user profile to do so.")
-            else:
-                while True:
-                    username = None
-                    password = None
-                    while True: # gets a username to login to
-                        username = str(input("Please enter a username/email to login with: "))
-                        check_valid = False
-                        for user in users:
-                            if user.username == username:
-                                check_valid = True
-                        if check_valid == True:
-                            break
-                        print("Username/Email does not exist.")
-
-                    valid_password = False
-                    password = str(input("Please enter the password to login: "))
-                    for user in users:
-                        if user.username == username and user.password == password:
-                            current_user = user
-                            valid_password = True
-                            break
-                    if valid_password == True:
-                        break
-                    print("Incorrect password. Please try again.")
+    else: # if the profile was already created, prompt them to log in
+        print("Welcome to your password manager!")
+        while True:
+            entered_username = str(input("Please enter a username/email to login with: "))
+            entered_password = str(input("Please enter the password to login: "))
+            if entered_username == username and entered_password == password:
+                break
+            print("\nIncorrect username or password was entered.\n")
     
     print()
-    print(f"You are logged in as {current_user.username}! Here are the sites you currently have passwords for:")
-       
+    print(f"Welcome {username}!")
 
-    after_login_choice = after_login_choices() # returns either 'a' 'c' or 'r' for add password, change password, or remove password
+    quit = False
 
+    while quit == False:
+        print("Here are the sites you currently have passwords for: ")
+        for site in site_passwords:
+            print(site)
+
+        choice = after_login_choices() # returns either 'f' 'a' 'c' 'd' or 'r' for fetch password, add password, change password, delete password, or reset login 
+        
+        if choice == 'f':
+            if len(site_passwords) == 0:
+                print("\nMust have at least one password added to fetch.")
+            else:
+                site_choice = None
+                while True:
+                    site_choice = str(input("For which site do you want to access passwords for?: "))
+                    found_site = False
+                    for site in site_passwords.keys():
+                        if site == site_choice:
+                            found_site == True
+                            break
+                    if found_site == True:
+                        break
+                    print("Please enter a site that you currently have a password stored for.")
+                for site in site_passwords:
+                    if site == site_choice:
+                        for u, p in site_passwords.get(site_choice).items():   # looping through each username and password entry in that site (dictionary)
+                            print(f"Username: {u}   Password: {p}") # prints usernames and passwords for that site
+        elif choice == 'r':
+            change_master_login()
+        elif choice == 'a':
+            quit = True
+
+
+
+
+    """
     users_file = open("users.txt", "w") # clears the current data in the users.txt file before uploading data from users list
     users_file = open("users.txt", "a")
-
+ 
     for user in users: # saves the new data to text files before exiting password manager
         users_file.write(user.username + " " + user.password + "\n")
-
+    """
 main()
-    
