@@ -32,13 +32,6 @@ for file in os.listdir(path_to_websites):
 
 site_passwords = {}
 
-"""
-def remove_password(site: str) -> bool:
-    if site_passwords.pop(site.lower, -1) == -1:
-        return False
-    return True        
-"""
-
 if os.path.exists(f"{current_directory}/MasterLogin.txt"):
     with open("MasterLogin.txt") as f:
         (key, val) = f.readline().strip('\n').split()
@@ -66,8 +59,8 @@ def after_login_choices() -> str:
     while True:
         print()
         response = input("What would you like to do?:\nFetch A Password: [F]\nAdd A Password: [A]\nChange A Password: [C]\
-        \nDelete A Password: [D]\nReset Master Login Information: [R]\nSELECT: ").lower()
-        if response == 'f' or response == 'a' or response == 'c' or response == 'd' or response == 'r':
+        \nDelete A Password: [D]\nReset Master Login Information: [R]\nSave and Quit [S]\nSELECT: ").lower()
+        if response == 'f' or response == 'a' or response == 'c' or response == 'd' or response == 'r' or response =='s':
             return response
         if platform.system == 'Windows':
             os.system('cls')
@@ -183,9 +176,35 @@ def main():
                 print(f"Successfully added/changed login info for {site_choice}!")
         
         elif choice == 'd':
-            quit = True
+            site_choice = str(input("What site would you like to delete logins for?: ")).lower()
+            site_logins = None
+            found_site = False
+            for site in websites:
+                if site.name == site_choice:
+                    found_site = True
+                    site_logins = site
+                    break
+            if found_site == True:
+                for u, p in site_logins.accounts.items():
+                    print(f"Username: {u}   Password: {p}") # prints usernames and passwords for that site
+                print()
+                reply = str(input("Would you like to delete all logins for this website or just one?:\nAll [A]\nOne [O]\nCHOICE: "))
+                if reply.lower() == 'a':
+                    websites.remove(site_logins)
+                    print(f"Successfully removed all login items for {site_choice}")
+                elif reply.lower() == 'o':
+                    to_remove = str(input("Type the username of the login you would like to remove: "))
+                    if to_remove in site_logins.accounts.keys():
+                        del site_logins.accounts[to_remove]
+                        if len(site_logins.accounts) == 0:
+                            websites.remove(site_logins)
+                        print(f"Successfully deleted the login for the username of {to_remove}!")
+                    else:
+                        print("Username does not exist.\n")
+            else: # site was not found
+                print(f"{site_choice} does not have any login info stored. Please enter a valid website to delete login info for.\n")
         
-        else: # choice must be 'q' for quit
+        else: # choice must be 's' for save and quit
             quit = True
 
             
@@ -194,18 +213,16 @@ def main():
     user_file = open("MasterLogin.txt", "a")
 
     user_file.write(username + " " + password)
+
+    # delete existing text files before uploading new logins in case a whole website's logins were deleted 
+    for f in os.listdir(path_to_websites):
+        os.remove(os.path.join(path_to_websites, f))
     
     # updates all the login information before exiting the program
     for website in websites:
-        if path.exists(path_to_websites + f"/{website.name}.txt"): # if the file for that website already exists
-            website_file = open(path_to_websites + f"/{website.name}.txt", "w")
-            website_file = open(path_to_websites + f"/{website.name}.txt", "a")
-            for u, p in website.accounts.items():
-                website_file.write(u + " " + p + "\n")
-        else:   # if the website doesn't already have a file of its own
-            new_website_file = open(path_to_websites + f"/{website.name}.txt", "a")
-            for u, p in website.accounts.items():
-                new_website_file.write(u + " " + p + "\n")
+        new_website_file = open(path_to_websites + f"/{website.name}.txt", "a")
+        for u, p in website.accounts.items():
+            new_website_file.write(u + " " + p + "\n")
     
     print(path_to_websites)
 
