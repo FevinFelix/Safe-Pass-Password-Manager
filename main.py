@@ -1,4 +1,3 @@
-from operator import truediv
 import os
 from os import path
 import platform
@@ -15,23 +14,38 @@ path_to_websites = os.path.join(current_directory, r'website_details')
 if not os.path.exists(path_to_websites):
    os.makedirs(path_to_websites)
 
-site_passwords = {}
-
 class website_logins: # represents the all the different login info for a specific website
     def __init__(self, name: str):
         self.name = name
         self.accounts = {}
+
+for file in os.listdir(path_to_websites):
+    name = file[0 : -4]
+    new_item = website_logins(name)
+    with open(f"{path_to_websites}/{name}.txt") as f:
+            lines = f.readlines()
+            for line in lines:
+                (u, p) = line.split()
+                new_item.accounts[u] = p
+    websites.append(new_item)
+    # pick up here and load in the existing passwords
+
+site_passwords = {}
+
 """
 def remove_password(site: str) -> bool:
     if site_passwords.pop(site.lower, -1) == -1:
         return False
     return True        
 """
-if os.path.getsize('MasterLogin.txt') != 0: # if a profile has been set up already, load in the username and password for it
+
+if os.path.exists(f"{current_directory}/MasterLogin.txt"):
     with open("MasterLogin.txt") as f:
         (key, val) = f.readline().strip('\n').split()
         username = key
         password = val
+else:
+    open("MasterLogin.txt", "x")
 
 def change_master_login():
     global username, password
@@ -52,7 +66,7 @@ def after_login_choices() -> str:
     while True:
         print()
         response = input("What would you like to do?:\nFetch A Password: [F]\nAdd A Password: [A]\nChange A Password: [C]\
-        \nDelete A Password: [D]\nReset Login Information: [R]\nSELECT: ").lower()
+        \nDelete A Password: [D]\nReset Master Login Information: [R]\nSELECT: ").lower()
         if response == 'f' or response == 'a' or response == 'c' or response == 'd' or response == 'r':
             return response
         if platform.system == 'Windows':
@@ -61,7 +75,10 @@ def after_login_choices() -> str:
             os.system('clear')
         print("\n******************************")
         print("Please choose a valid choice.")
-        print("******************************")
+        print("******************************\n")
+        print("\nHere are the sites you currently have login info for: ")
+        for site in websites:
+            print(site.name)
 
 def main():
     global username, password
@@ -181,8 +198,8 @@ def main():
     # updates all the login information before exiting the program
     for website in websites:
         if path.exists(path_to_websites + f"/{website.name}.txt"): # if the file for that website already exists
-            website_file = open(path_to_websites + f"/{website.name}.txt")
-            website_file = open(path_to_websites + f"/{website.name}.txt")
+            website_file = open(path_to_websites + f"/{website.name}.txt", "w")
+            website_file = open(path_to_websites + f"/{website.name}.txt", "a")
             for u, p in website.accounts.items():
                 website_file.write(u + " " + p + "\n")
         else:   # if the website doesn't already have a file of its own
