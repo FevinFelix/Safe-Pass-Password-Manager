@@ -1,10 +1,19 @@
+from operator import truediv
 import os
+from os import path
+import platform
 
 username = None
 password = None
 
 websites = [] # list of website_logins items
 # str : [{user, pass}, {user, pass}, {user, pass}]
+
+# creates a folder for storing website login info if one is not already present
+current_directory = os.getcwd()
+path_to_websites = os.path.join(current_directory, r'website_details')
+if not os.path.exists(path_to_websites):
+   os.makedirs(path_to_websites)
 
 site_passwords = {}
 
@@ -13,12 +22,6 @@ class website_logins: # represents the all the different login info for a specif
         self.name = name
         self.accounts = {}
 """
-def add_password(site: str, password: str) -> bool:
-    if not site.lower in site_passwords: # if the site hasn't been added yet
-        site_passwords[site.lower] = [password]
-    else: # we have to check if the same password has already been added too 
-        
-
 def remove_password(site: str) -> bool:
     if site_passwords.pop(site.lower, -1) == -1:
         return False
@@ -37,7 +40,10 @@ def change_master_login():
     if entered_username == username and entered_password == password:
         username = str(input("Please enter a new username to use: "))
         password = str(input("Please enter a new password to use: "))
-        #os.system('cls')
+        if platform.system == 'Windows':
+            os.system('cls')
+        else:
+            os.system('clear')
         print("\nSuccessfully changed login information!")
     else:
         print("\nIncorrect username or password was entered. Please try again.\n")
@@ -49,6 +55,10 @@ def after_login_choices() -> str:
         \nDelete A Password: [D]\nReset Login Information: [R]\nSELECT: ").lower()
         if response == 'f' or response == 'a' or response == 'c' or response == 'd' or response == 'r':
             return response
+        if platform.system == 'Windows':
+            os.system('cls')
+        else:
+            os.system('clear')
         print("\n******************************")
         print("Please choose a valid choice.")
         print("******************************")
@@ -88,7 +98,10 @@ def main():
             print(site.name)
 
         choice = after_login_choices() # returns either 'f' 'a' 'c' 'd' or 'r' for fetch password, add password, change password, delete password, or reset login 
-        
+        if platform.system == 'Windows':
+            os.system('cls')
+        else:
+            os.system('clear')
         if choice == 'f':
             if len(websites) == 0:
                 print("\nMust have login info for at least one website added to fetch.")
@@ -104,17 +117,39 @@ def main():
                 if found_site == True:
                     for u, p in site_logins.accounts.items():
                         print(f"Username: {u}   Password: {p}") # prints usernames and passwords for that site
+                    print()
                 else: 
                     print("You do not currently have login info stored for that website.")
         elif choice == 'r':
             change_master_login()
-        elif choice == 'a' or 'c':
+        elif choice == 'c':
             if choice == 'c' and len(websites) == 0:
                 print("\nMust have login info for at least one website added to change login information.")
             else:
-                site_choice = str(input("What site would you like to add/change username and password for?: ")).lower()
-                new_username = str(input("What username would you like to add/change?: ")).lower()
+                site_choice = str(input("What site would you like to change the username and password for?: ")).lower()
+                site_logins = None
+                found_site = False
+                for site in websites:
+                    if site.name == site_choice:
+                        found_site = True
+                        site_logins = site
+                        break
+                new_username = str(input("What username would you like to change?: ")).lower()
                 new_password = str(input("What is the new password for that username?: "))
+                
+                
+        elif choice == 'a':
+            valid_choices = True
+            site_choice = str(input("What site would you like to add/change username and password for?: ")).lower()
+            new_username = str(input("What username would you like to add/change?: ")).lower()
+            new_password = str(input("What is the new password for that username?: "))
+
+            if ' ' in new_username or ' ' in new_password:
+                print("Username cannot have spaces.")
+                print("Password cannot have spaces.")
+                valid_choices = False
+
+            if valid_choices == True:   
                 site_logins = None
                 found_site = False
                 for site in websites:
@@ -123,7 +158,6 @@ def main():
                         site_logins = site
                         break
                 if found_site == True: # if the site already has login info stored
-                    print("did this")
                     site_logins.accounts[new_username] = new_password
                 else: # create a new website_logins object for the login and add it to the list of known websites
                     new_website = website_logins(site_choice)
@@ -131,7 +165,10 @@ def main():
                     websites.append(new_website)
                 print(f"Successfully added/changed login info for {site_choice}!")
         
-        else: # must be 'd' for delete password
+        elif choice == 'd':
+            quit = True
+        
+        else: # choice must be 'q' for quit
             quit = True
 
             
@@ -140,8 +177,19 @@ def main():
     user_file = open("MasterLogin.txt", "a")
 
     user_file.write(username + " " + password)
-
-    print(websites.items())
     
+    # updates all the login information before exiting the program
+    for website in websites:
+        if path.exists(path_to_websites + f"/{website.name}.txt"): # if the file for that website already exists
+            website_file = open(path_to_websites + f"/{website.name}.txt")
+            website_file = open(path_to_websites + f"/{website.name}.txt")
+            for u, p in website.accounts.items():
+                website_file.write(u + " " + p + "\n")
+        else:   # if the website doesn't already have a file of its own
+            new_website_file = open(path_to_websites + f"/{website.name}.txt", "a")
+            for u, p in website.accounts.items():
+                new_website_file.write(u + " " + p + "\n")
+    
+    print(path_to_websites)
 
 main()
