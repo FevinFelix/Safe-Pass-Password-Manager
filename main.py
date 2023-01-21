@@ -2,6 +2,9 @@ import os
 from os import path
 import platform
 
+# install and import paramiko at some point for remote access stuff
+# tkinter modern for ui
+
 username = None
 password = None
 
@@ -40,6 +43,12 @@ if os.path.exists(f"{current_directory}/MasterLogin.txt"):
 else:
     open("MasterLogin.txt", "x")
 
+def clear_screen():
+    if platform.system == 'Windows':
+        os.system('cls')
+    else:
+        os.system('clear')
+
 def change_master_login():
     global username, password
     entered_username = str(input("Please enter your current username: "))
@@ -47,10 +56,7 @@ def change_master_login():
     if entered_username == username and entered_password == password:
         username = str(input("Please enter a new username to use: "))
         password = str(input("Please enter a new password to use: "))
-        if platform.system == 'Windows':
-            os.system('cls')
-        else:
-            os.system('clear')
+        clear_screen()
         print("\nSuccessfully changed login information!")
     else:
         print("\nIncorrect username or password was entered. Please try again.\n")
@@ -62,10 +68,7 @@ def after_login_choices() -> str:
         \nDelete A Password: [D]\nReset Master Login Information: [R]\nSave and Quit [S]\nSELECT: ").lower()
         if response == 'f' or response == 'a' or response == 'c' or response == 'd' or response == 'r' or response =='s':
             return response
-        if platform.system == 'Windows':
-            os.system('cls')
-        else:
-            os.system('clear')
+        clear_screen()
         print("\n******************************")
         print("Please choose a valid choice.")
         print("******************************\n")
@@ -74,6 +77,15 @@ def after_login_choices() -> str:
             print(site.name)
 
 def main():
+    print(r"""
+    ███████╗ █████╗ ███████╗███████╗    ██████╗  █████╗ ███████╗███████╗
+    ██╔════╝██╔══██╗██╔════╝██╔════╝    ██╔══██╗██╔══██╗██╔════╝██╔════╝
+    ███████╗███████║█████╗  █████╗      ██████╔╝███████║███████╗███████╗
+    ╚════██║██╔══██║██╔══╝  ██╔══╝      ██╔═══╝ ██╔══██║╚════██║╚════██║
+    ███████║██║  ██║██║     ███████╗    ██║     ██║  ██║███████║███████║
+    ╚══════╝╚═╝  ╚═╝╚═╝     ╚══════╝    ╚═╝     ╚═╝  ╚═╝╚══════╝╚══════╝""")
+    print()
+
     global username, password
     if username == None:
         print("It looks like you don't have a profile set up. Let's set one up for you!")
@@ -97,8 +109,8 @@ def main():
                 break
             print("\nIncorrect username or password was entered.\n")
     
-    print()
-    print(f"Welcome {username}!")
+    clear_screen()
+    print(f"Welcome {username}!\n")
 
     quit = False
 
@@ -108,10 +120,7 @@ def main():
             print(site.name)
 
         choice = after_login_choices() # returns either 'f' 'a' 'c' 'd' or 'r' for fetch password, add password, change password, delete password, or reset login 
-        if platform.system == 'Windows':
-            os.system('cls')
-        else:
-            os.system('clear')
+        clear_screen()
         if choice == 'f':
             if len(websites) == 0:
                 print("\nMust have login info for at least one website added to fetch.")
@@ -136,7 +145,10 @@ def main():
             if choice == 'c' and len(websites) == 0:
                 print("\nMust have login info for at least one website added to change login information.")
             else:
-                site_choice = str(input("What site would you like to change the username and password for?: ")).lower()
+                print("Here are the sites you currently have login info for: ")
+                for site in websites:
+                    print(site.name)
+                site_choice = str(input("\nWhat site would you like to change the username and password for?: \n")).lower()
                 site_logins = None
                 found_site = False
                 for site in websites:
@@ -144,14 +156,30 @@ def main():
                         found_site = True
                         site_logins = site
                         break
-                new_username = str(input("What username would you like to change?: ")).lower()
-                new_password = str(input("What is the new password for that username?: "))
-                
+                if found_site == True:
+                    for u, p in site_logins.accounts.items():
+                        print(f"Username: {u}   Password: {p}\n") # prints usernames and passwords for that site
+                    old_username = str(input("What username's password would you like to change?: ")).lower()
+
+                    for user in site_logins.accounts.keys():
+                        if user == old_username:
+                            new_password = str(input("What is the new password for that username?: "))
+                            site_logins.accounts[old_username] = new_password
+                            print(f"Successfully changed password for user: {old_username}!")
+                            break 
+                    else: 
+                        print(f"{old_username} is not a valid username currently stored for {site_logins.name}.")
+                else:
+                    print(f"\nYou do not have any login information for {site_choice}")
                 
         elif choice == 'a':
             valid_choices = True
-            site_choice = str(input("What site would you like to add/change username and password for?: ")).lower()
-            new_username = str(input("What username would you like to add/change?: ")).lower()
+            print("Here are the sites you currently have login info for: ")
+            for site in websites:
+                print(site.name)
+            site_choice = str(input("\nWhat site would you like to add username and password for?: ")).lower()
+            clear_screen()
+            new_username = str(input("What username would you like to add?: ")).lower()
             new_password = str(input("What is the new password for that username?: "))
 
             if ' ' in new_username or ' ' in new_password:
@@ -173,10 +201,15 @@ def main():
                     new_website = website_logins(site_choice)
                     new_website.accounts[new_username] = new_password
                     websites.append(new_website)
-                print(f"Successfully added/changed login info for {site_choice}!")
+                clear_screen()
+                print(f"\033[1mSuccessfully added login info for {new_username} in {site_choice}!\033[0m\n")
         
         elif choice == 'd':
-            site_choice = str(input("What site would you like to delete logins for?: ")).lower()
+            print("Here are the sites you currently have login info for: ")
+            for site in websites:
+                print(site.name)
+            site_choice = str(input("\nWhat site would you like to delete logins for?: ")).lower()
+            clear_screen()
             site_logins = None
             found_site = False
             for site in websites:
@@ -185,6 +218,7 @@ def main():
                     site_logins = site
                     break
             if found_site == True:
+                print(f"Logins for {site_choice}:")
                 for u, p in site_logins.accounts.items():
                     print(f"Username: {u}   Password: {p}") # prints usernames and passwords for that site
                 print()
@@ -193,14 +227,19 @@ def main():
                     websites.remove(site_logins)
                     print(f"Successfully removed all login items for {site_choice}")
                 elif reply.lower() == 'o':
-                    to_remove = str(input("Type the username of the login you would like to remove: "))
+                    to_remove = str(input("\nType the username of the login you would like to remove: "))
                     if to_remove in site_logins.accounts.keys():
                         del site_logins.accounts[to_remove]
                         if len(site_logins.accounts) == 0:
                             websites.remove(site_logins)
-                        print(f"Successfully deleted the login for the username of {to_remove}!")
+                        clear_screen()
+                        print(f"Successfully deleted the login for the username of \033[1m{to_remove}\033[0m in {site_choice}!\n")
                     else:
-                        print("Username does not exist.\n")
+                        clear_screen()
+                        print(f"Username {to_remove} does not exist in {site_logins.name}.\n")
+                else: # must have entered an invalid option
+                    clear_screen()
+                    print("Invalid delete option entered.\n")
             else: # site was not found
                 print(f"{site_choice} does not have any login info stored. Please enter a valid website to delete login info for.\n")
         
