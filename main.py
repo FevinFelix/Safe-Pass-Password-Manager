@@ -1,9 +1,43 @@
 import os
 from os import path
 import platform
+import time
 
-# install and import paramiko at some point for remote access stuff
-# tkinter modern for ui
+import cryptography
+from cryptography.fernet import Fernet # had to install this
+import sys
+
+keyFern = None
+cipher_suite = None
+
+def clear_screen():
+    if platform.system == 'Windows':
+        os.system('cls')
+    else:
+        os.system('clear')
+
+while True:
+    if os.path.exists("/Volumes/Extreme SSD"): # usb key is plugged in
+        if not os.path.exists("/Volumes/Extreme SSD/FernetKey.txt"):
+            keyFern = Fernet.generate_key() #this is the one time password
+            key_file = open(r"/Volumes/Extreme SSD/FernetKey.txt", "wb")
+            verification_file = open("key_verification.txt", "wb")
+
+            cipher_suite = Fernet(keyFern)
+            key_file.write(keyFern)
+            verification_file.write(cipher_suite.encrypt(b"Verified"))
+            break
+        else: # usb key is plugged and key has been generated
+            with open("/Volumes/Extreme SSD/FernetKey.txt", "rb") as f:
+                keyFern = f.readline()
+                cipher_suite = Fernet(keyFern)
+            break
+    clear_screen()
+    print("Please plug in the proper usb key to continue.")
+    time.sleep(1)
+    
+
+print(keyFern)
 
 username = None
 password = None
@@ -43,12 +77,6 @@ if os.path.exists(f"{current_directory}/MasterLogin.txt"):
 else:
     open("MasterLogin.txt", "x")
 
-def clear_screen():
-    if platform.system == 'Windows':
-        os.system('cls')
-    else:
-        os.system('clear')
-
 def change_master_login():
     global username, password
     entered_username = str(input("Please enter your current username: "))
@@ -85,7 +113,6 @@ def main():
     ███████║██║  ██║██║     ███████╗    ██║     ██║  ██║███████║███████║
     ╚══════╝╚═╝  ╚═╝╚═╝     ╚══════╝    ╚═╝     ╚═╝  ╚═╝╚══════╝╚══════╝""")
     print()
-
     global username, password
     if username == None:
         print("It looks like you don't have a profile set up. Let's set one up for you!")
@@ -96,6 +123,7 @@ def main():
         while True:
             password = str(input("Please enter a password without any spaces: "))
             if not ' ' in password:
+                keyFern = b'{password}'
                 break
         print("Successfully created the user profile.")
         # at this point, you have a valid username and password without spaces for the user 
@@ -225,6 +253,7 @@ def main():
                 reply = str(input("Would you like to delete all logins for this website or just one?:\nAll [A]\nOne [O]\nCHOICE: "))
                 if reply.lower() == 'a':
                     websites.remove(site_logins)
+                    clear_screen()
                     print(f"Successfully removed all login items for {site_choice}")
                 elif reply.lower() == 'o':
                     to_remove = str(input("\nType the username of the login you would like to remove: "))
