@@ -16,16 +16,24 @@ def clear_screen():
     else:
         os.system('clear')
 
+def decrypt(encrypted):
+    return str(cipher_suite.decrypt(encrypted), 'utf-8')
+
+def encrypt(decrypted):
+    return cipher_suite.encrypt(decrypted.encode())
+
 while True:
     if os.path.exists("/Volumes/Extreme SSD"): # usb key is plugged in
         if not os.path.exists("/Volumes/Extreme SSD/FernetKey.txt"):
             keyFern = Fernet.generate_key() #this is the one time password
             key_file = open(r"/Volumes/Extreme SSD/FernetKey.txt", "wb")
-            verification_file = open("key_verification.txt", "wb")
+            verification_file = open(r"key_verification.txt", "wb")
 
             cipher_suite = Fernet(keyFern)
             key_file.write(keyFern)
             verification_file.write(cipher_suite.encrypt(b"Verified"))
+            verification_file = open("key_verification.txt", "rb")
+            print(decrypt(verification_file.readline()))
             break
         else: # usb key is plugged and key has been generated
             with open("/Volumes/Extreme SSD/FernetKey.txt", "rb") as f:
@@ -34,10 +42,8 @@ while True:
             break
     clear_screen()
     print("Please plug in the proper usb key to continue.")
-    time.sleep(1)
-    
+    time.sleep(2)
 
-print(keyFern)
 
 username = None
 password = None
@@ -56,24 +62,22 @@ class website_logins: # represents the all the different login info for a specif
         self.name = name
         self.accounts = {}
 
+# load in the existing passwords
 for file in os.listdir(path_to_websites):
     name = file[0 : -4]
     new_item = website_logins(name)
-    with open(f"{path_to_websites}/{name}.txt") as f:
+    with open(f"{path_to_websites}/{name}.txt", "rb") as f:
             lines = f.readlines()
             for line in lines:
                 (u, p) = line.split()
-                new_item.accounts[u] = p
+                new_item.accounts[decrypt(u)] = decrypt(p)
     websites.append(new_item)
-    # pick up here and load in the existing passwords
-
-site_passwords = {}
 
 if os.path.exists(f"{current_directory}/MasterLogin.txt"):
-    with open("MasterLogin.txt") as f:
-        (key, val) = f.readline().strip('\n').split()
-        username = key
-        password = val
+    with open("MasterLogin.txt", "rb") as f:
+        (key, val) = f.readline().split()
+        username = decrypt(key)
+        password = decrypt(val)
 else:
     open("MasterLogin.txt", "x")
 
@@ -123,7 +127,6 @@ def main():
         while True:
             password = str(input("Please enter a password without any spaces: "))
             if not ' ' in password:
-                keyFern = b'{password}'
                 break
         print("Successfully created the user profile.")
         # at this point, you have a valid username and password without spaces for the user 
@@ -153,8 +156,11 @@ def main():
             if len(websites) == 0:
                 print("\nMust have login info for at least one website added to fetch.")
             else:
+                print("Here are the sites you currently have login info for: ")
+                for site in websites:
+                    print(site.name)
                 site_logins = None
-                site_choice = str(input("For which site do you want to access usernames and passwords for?: ")).lower()
+                site_choice = str(input("\nFor which site do you want to access usernames and passwords for?: ")).lower()
                 found_site = False
                 for site in websites:
                     if site.name == site_choice:
@@ -211,8 +217,7 @@ def main():
             new_password = str(input("What is the new password for that username?: "))
 
             if ' ' in new_username or ' ' in new_password:
-                print("Username cannot have spaces.")
-                print("Password cannot have spaces.")
+                print("Username and/or password cannot have spaces.\n")
                 valid_choices = False
 
             if valid_choices == True:   
@@ -223,6 +228,7 @@ def main():
                         found_site = True
                         site_logins = site
                         break
+
                 if found_site == True: # if the site already has login info stored
                     site_logins.accounts[new_username] = new_password
                 else: # create a new website_logins object for the login and add it to the list of known websites
@@ -278,9 +284,9 @@ def main():
             
 
     user_file = open("MasterLogin.txt", "w") # clears the current data in the MasterLogin.txt file before uploading new data
-    user_file = open("MasterLogin.txt", "a")
+    user_file = open("MasterLogin.txt", "ab") #append bytes mode for encrypted data
 
-    user_file.write(username + " " + password)
+    user_file.write(encrypt(username) + b" " + encrypt(password))
 
     # delete existing text files before uploading new logins in case a whole website's logins were deleted 
     for f in os.listdir(path_to_websites):
@@ -288,9 +294,9 @@ def main():
     
     # updates all the login information before exiting the program
     for website in websites:
-        new_website_file = open(path_to_websites + f"/{website.name}.txt", "a")
+        new_website_file = open(path_to_websites + f"/{website.name}.txt", "ab")
         for u, p in website.accounts.items():
-            new_website_file.write(u + " " + p + "\n")
+            new_website_file.write(encrypt(u) + b" " + encrypt(p) + b"\n")
     
     print(path_to_websites)
 
